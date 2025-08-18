@@ -1,4 +1,4 @@
-%%writefile hazard_area.py
+
 
 import folium
 from pyproj import Geod
