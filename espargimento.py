@@ -1,20 +1,86 @@
-import math
-from math import radians, sin, cos, sqrt
+
+
 import folium
+from math import radians, sin, cos, sqrt
 from pyproj import Geod
 
+# Inicializa geodésia WGS84
 geod = Geod(ellps="WGS84")
 
-def meters_to_latlon_distances(meters, lat, azimuth):
+def meters_to_latlon(lon, lat, distance, azimuth):
     """
-    Converte deslocamento em metros para graus de latitude e longitude
-    considerando a latitude atual e a direção (azimute) do deslocamento.
+    Retorna o ponto final (lat, lon) deslocado a 'distance' metros de (lat, lon)
+    na direção 'azimuth' (graus, norte=0, leste=90).
     """
-    lon0, lat0 = 0, lat
-    lon1, lat1, _ = geod.fwd(lon0, lat0, azimuth, meters)
-    delta_lat = lat1 - lat0
-    delta_lon = lon1 - lon0
-    return delta_lat, delta_lon
+    lon2, lat2, _ = geod.fwd(lon, lat, azimuth, distance)
+    return lat2, lon2
+
+
+def desenhar_area_espargimento(
+    map_obj,
+    source,
+    source_final,
+    wind_speed,
+    wind_direction,
+    radius_release_area,
+    downwind_distance,
+    common_length,
+    meio_de_lancamento,
+    draw_hazard_area_generic
+):
+    """
+    Desenha a área de espargimento para vento <= 10 km/h
+    """
+    # Desenhar áreas de liberação usando função genérica
+    for ponto in [source, source_final]:
+        draw_hazard_area_generic(
+            map_object=map_obj,
+            source_location=ponto,
+            wind_speed=wind_speed,
+            wind_direction=wind_direction,
+            radius_release_area=radius_release_area,
+            downwind_distance=downwind_distance,
+            common_length=common_length,
+            meio_de_lancamento=meio_de_lancamento,
+            estabilidade_do_ar='',
+            desenhar_poligono_condicional=True
+        )
+
+    # Linha central entre os centros de liberação
+    folium.PolyLine(
+        locations=[source, source_final],
+        color='gray',
+        weight=0.5,
+        tooltip='Linha entre áreas de liberação'
+    ).add_to(map_obj)
+
+    # Vetor perpendicular para criar paralelas e polígono entre as áreas
+    lat1, lon1 = source
+    lat2, lon2 = source_final
+    # Azimute entre os pontos
+    fwd_azimuth, back_azimuth, distance = geod.inv(lon1, lat1, lon2, lat2)
+    # Perpendicular: azimute ±90
+    perp_azimuth = fwd_azimuth + 90
+
+    # Offset de 1 km para criar linhas paralelas
+    offset = 1000
+    upper_start = meters_to_latlon(lon1, lat1, offset, perp_azimuth)
+    upper_end   = meters_to_latlon(lon2, lat2, offset, perp_azimuth)
+    lower_start = meters_to_latlon(lon1, lat1, offset, perp_azimuth + 180)
+    lower_end   = meters_to_latlon(lon2, lat2, offset, perp_azimuth + 180)
+
+    folium.PolyLine(locations=[upper_start, upper_end], color='red', weight=2, tooltip='Paralela superior').add_to(map_obj)
+    folium.PolyLine(locations=[lower_start, lower_end], color='red', weight=2, tooltip='Paralela inferior').add_to(map_obj)
+
+    folium.Polygon(
+        locations=[upper_start, upper_end, lower_end, lower_start],
+        color='red',
+        weight=2,
+        fill=True,
+        fill_color='red',
+        fill_opacity=0.7,
+        tooltip='Polígono entre linhas paralelas'
+    ).add_to(map_obj)
 
 
 def desenhar_area_espargimento2(
@@ -29,118 +95,63 @@ def desenhar_area_espargimento2(
     meio_de_lancamento,
     draw_hazard_area_generic
 ):
-    # 1. Desenha os círculos das áreas de liberação
-    for loc, label in zip([source, source_final], ['source', 'source_final']):
+    """
+    Desenha a área de espargimento para vento > 10 km/h
+    incluindo linhas downwind e triângulos de dispersão
+    """
+    for ponto in [source, source_final]:
+        # Círculos de liberação
         folium.Circle(
-            location=loc,
+            location=ponto,
             radius=radius_release_area,
             color='red',
             fill=True,
             fill_opacity=0.3,
-            popup=f'Área de Liberação - {label}'
+            popup=f'Área de Liberação - {ponto}'
         ).add_to(map_obj)
 
-    # 2. Linha central entre os dois centros
+    # Linha central entre os dois centros
     folium.PolyLine(
         locations=[source, source_final],
         color='gray',
-        weight=0.1,
+        weight=0.5,
         tooltip='Linha entre áreas de liberação'
     ).add_to(map_obj)
 
-    # 3. Vetor perpendicular para linhas paralelas
-    lat1, lon1 = source
-    lat2, lon2 = source_final
-    dx = lon2 - lon1
-    dy = lat2 - lat1
-    comprimento = sqrt(dx**2 + dy**2)
-    if comprimento == 0:
-        return
-
-    perp_dx = -dy / comprimento
-    perp_dy = dx / comprimento
-
-    offset_metros = 1000  # 1 km
-    azimuth_perp = math.degrees(math.atan2(perp_dx, perp_dy))
-    delta_lat, delta_lon = meters_to_latlon_distances(offset_metros, (lat1 + lat2)/2, azimuth_perp)
-
-    p1_sup = (lat1 + delta_lat, lon1 + delta_lon)
-    p2_sup = (lat2 + delta_lat, lon2 + delta_lon)
-    p1_inf = (lat1 - delta_lat, lon1 - delta_lon)
-    p2_inf = (lat2 - delta_lat, lon2 - delta_lon)
-
-    folium.PolyLine([p1_sup, p2_sup], color='red', weight=2, tooltip='Paralela superior').add_to(map_obj)
-    folium.PolyLine([p1_inf, p2_inf], color='red', weight=2, tooltip='Paralela inferior').add_to(map_obj)
-
-    folium.Polygon(
-        locations=[p1_sup, p2_sup, p2_inf, p1_inf],
-        color='red',
-        weight=2,
-        fill=True,
-        fill_color='red',
-        fill_opacity=0.3,
-        tooltip='Polígono entre linhas paralelas'
-    ).add_to(map_obj)
-
-    # 4. Downwind e triângulos para cada ponto
-    angle_rad = radians(wind_direction)
-
+    # Triângulos de dispersão para cada ponto
     for lat, lon in [source, source_final]:
         # Ponto downwind
-        delta_lat_m = downwind_distance * sin(angle_rad)
-        delta_lon_m = downwind_distance * cos(angle_rad)
-        delta_lat_deg, delta_lon_deg = meters_to_latlon_distances(
-            sqrt(delta_lat_m**2 + delta_lon_m**2),
-            lat,
-            math.degrees(math.atan2(delta_lon_m, delta_lat_m))
-        )
-        downwind_point = (lat + delta_lat_deg, lon + delta_lon_deg)
-
-        # Linha branca tracejada do círculo até downwind_point
+        down_lat, down_lon = meters_to_latlon(lon, lat, downwind_distance, wind_direction)
         folium.PolyLine(
-            locations=[(lat, lon), downwind_point],
+            locations=[(lat, lon), (down_lat, down_lon)],
             color='white',
             weight=0.1,
-            dash_array='5,5',
+            dash_array='5,5'
         ).add_to(map_obj)
 
-        # Triângulo lateral
+        # Ponto perpendicular para criar triângulo
         side_length = (2 / sqrt(3)) * (downwind_distance + 2 * radius_release_area)
-        perp_angle = angle_rad + radians(90)
+        # Perpendicular à linha do vento
+        upper_lat, upper_lon = meters_to_latlon(down_lon, down_lat, side_length/2, wind_direction + 90)
+        lower_lat, lower_lon = meters_to_latlon(down_lon, down_lat, side_length/2, wind_direction - 90)
 
-        delta_lat_latlon, delta_lon_latlon = meters_to_latlon_distances(
-            side_length / 2,
-            downwind_point[0],
-            math.degrees(perp_angle)
-        )
+        # Linhas triangulares
+        for angle_offset, color, start_point in zip([60, 120], ['blue', 'green'], [(upper_lat, upper_lon), (lower_lat, lower_lon)]):
+            end_lat, end_lon = meters_to_latlon(start_point[1], start_point[0], common_length, wind_direction - angle_offset)
+            folium.PolyLine(
+                locations=[start_point, (end_lat, end_lon)],
+                color=color,
+                weight=1,
+                dash_array='5,5'
+            ).add_to(map_obj)
 
-        upper_perp = (downwind_point[0] + delta_lat_latlon, downwind_point[1] + delta_lon_latlon)
-        lower_perp = (downwind_point[0] - delta_lat_latlon, downwind_point[1] - delta_lon_latlon)
-
-        folium.PolyLine([upper_perp, lower_perp], color='black', weight=1, dash_array='5,5').add_to(map_obj)
-
-        # Linhas azul e verde formando triângulos
-        def draw_line(start_point, base_angle_rad, angle_offset_deg, color, length):
-            angle = base_angle_rad - radians(angle_offset_deg)
-            delta_lat_line, delta_lon_line = meters_to_latlon_distances(length, start_point[0], math.degrees(angle))
-            end_point = (start_point[0] - delta_lat_line, start_point[1] - delta_lon_line)
-            folium.PolyLine([start_point, end_point], color=color, weight=1, dash_array='5,5').add_to(map_obj)
-            return end_point
-
-        blue_end = draw_line(upper_perp, perp_angle, 60, 'blue', common_length)
-        green_end = draw_line(lower_perp, perp_angle, 120, 'green', common_length)
-
-        # Linha entre pontas azul e verde
-        folium.PolyLine([blue_end, green_end], color='yellow', weight=1, dash_array='5,5').add_to(map_obj)
-
-        # Polígono fechado do triângulo
+        # Polígono triângulo final
         folium.Polygon(
-            locations=[upper_perp, blue_end, green_end, lower_perp],
+            locations=[(upper_lat, upper_lon), (down_lat, down_lon), (lower_lat, lower_lon)],
             color='red',
             weight=2,
             fill=True,
-            fill_opacity=0.2,
-            popup='Polígono Fechado'
+            fill_opacity=0.2
         ).add_to(map_obj)
 
         # Círculo reforçado da área de liberação
