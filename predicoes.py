@@ -1,4 +1,4 @@
-
+%%writefile predicoes.py
 
 import folium
 from hazard_area import draw_hazard_area_generic
@@ -84,4 +84,64 @@ def executar_predicao_persistente(map_obj, source, wind_speed, wind_direction):
     meio_de_lancamento = input("Digite o meio de lançamento: ").strip().lower()
 
     # Casos de espargimento ou gerador
-    if meio_de_lancamento in
+    if meio_de_lancamento in ['espargimento', 'gerador']:
+        source_final = (-22.841, -43.1798)  # Exemplo
+        downwind_distance = 10000
+        common_length = 12000
+        radius_release_area = 1000
+
+        if wind_speed <= 10:
+            desenhar_area_espargimento(
+                map_obj=map_obj,
+                source=source,
+                source_final=source_final,
+                radius_release_area=radius_release_area,
+                downwind_distance=downwind_distance,
+                common_length=common_length,
+                wind_speed=wind_speed,
+                wind_direction=wind_direction,
+                meio_de_lancamento=meio_de_lancamento,
+                draw_hazard_area_generic=draw_hazard_area_generic
+            )
+        else:
+            desenhar_area_espargimento2(
+                map_obj=map_obj,
+                source=source,
+                source_final=source_final,
+                radius_release_area=radius_release_area,
+                downwind_distance=downwind_distance,
+                common_length=common_length,
+                wind_speed=wind_speed,
+                wind_direction=wind_direction,
+                meio_de_lancamento=meio_de_lancamento,
+                draw_hazard_area_generic=draw_hazard_area_generic
+            )
+
+    # Outros meios
+    else:
+        if meio_de_lancamento in ['bomba', 'granada', 'mina', 'foguete de detonação de superfície', 'míssil']:
+            radius_release_area = 1000
+            downwind_distance = 10000
+            common_length = 12000
+        elif meio_de_lancamento in ['foguete de detonação aérea', 'míssil de detonação aérea']:
+            radius_release_area = 2000
+            downwind_distance = 10000
+            common_length = 12600
+        else:
+            print("Meio de lançamento não reconhecido. Usando valores padrão.")
+            radius_release_area = 1000
+            downwind_distance = 10000
+            common_length = 12000
+
+        draw_hazard_area_generic(
+            map_object=map_obj,
+            source_location=source,
+            wind_speed=wind_speed,
+            wind_direction=wind_direction,
+            radius_release_area=radius_release_area,
+            downwind_distance=downwind_distance,
+            common_length=common_length,
+            meio_de_lancamento=meio_de_lancamento,
+            estabilidade_do_ar='',
+            desenhar_poligono_condicional=True
+        )
