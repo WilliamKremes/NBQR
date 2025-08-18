@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>NBQR Top • Predição</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 20px; }
+      form { display: grid; grid-template-columns: repeat(4, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
+      label { font-size: 12px; color: #555; }
+      input, select, button { padding: 8px; font-size: 14px; }
+      button { grid-column: 1/-1; cursor: pointer; }
+      .hint { font-size: 12px; color: #666; margin: 8px 0 16px; }
+      .map { width: 100%; height: 70vh; }
+    </style>
+  </head>
+  <body>
+    <h1>NBQR Top • Predição de Área</h1>
+    <form method="post">
+      <div>
+        <label>Latitude</label>
+        <input type="number" step="any" name="lat" value="{{ lat }}" required>
+      </div>
+      <div>
+        <label>Longitude</label>
+        <input type="number" step="any" name="lon" value="{{ lon }}" required>
+      </div>
+      <div>
+        <label>Vento (km/h)</label>
+        <input type="number" step="any" name="wind_speed" value="{{ wind_speed }}" required>
+      </div>
+      <div>
+        <label>Direção do vento (°)</label>
+        <input type="number" step="any" name="wind_direction" value="{{ wind_direction }}" required>
+      </div>
+      <div>
+        <label>Agente químico</label>
+        <input type="text" name="agente" placeholder="ex.: sarin, vx, mostarda..." value="{{ agente }}">
+      </div>
+      <div>
+        <label>Meio de lançamento</label>
+        <input type="text" name="meio" placeholder="ex.: granada, bomba, espargimento..." value="{{ meio }}">
+      </div>
+      <div>
+        <label>Estabilidade do ar</label>
+        <select name="estabilidade">
+          <option value="" selected>—</option>
+          <option value="instável" {{ 'selected' if estabilidade=='instável' else '' }}>instável</option>
+          <option value="neutra" {{ 'selected' if estabilidade=='neutra' else '' }}>neutra</option>
+          <option value="estável" {{ 'selected' if estabilidade=='estável' else '' }}>estável</option>
+        </select>
+      </div>
+      <button type="submit">Gerar mapa</button>
+    </form>
+
+    <div class="hint">
+      Dica: se não informar “agente químico”, roda a predição simplificada. Para agentes <b>não persistentes</b> considera a estabilidade do ar; para <b>persistentes</b>, considera o meio de lançamento.
+    </div>
+
+    <div class="map">{{ map_html|safe }}</div>
+  </body>
+</html>
