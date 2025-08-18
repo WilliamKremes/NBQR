@@ -1,6 +1,20 @@
 import folium
-from math import sin, cos, radians, sqrt
-from utils import meters_to_latlon_distances
+import math
+from pyproj import Geod
+
+# Inicializa geodésia WGS84
+geod = Geod(ellps="WGS84")
+
+def meters_to_latlon_distances(meters, lat, azimuth=0):
+    """
+    Converte deslocamento em metros para delta de latitude e longitude
+    considerando azimute (graus) a partir de lat.
+    """
+    lon0, lat0 = 0, lat
+    lon1, lat1, _ = geod.fwd(lon0, lat0, azimuth, meters)
+    delta_lat = lat1 - lat0
+    delta_lon = lon1 - lon0
+    return delta_lat, delta_lon
 
 def draw_hazard_area_generic(
     map_object,
@@ -51,19 +65,14 @@ def draw_hazard_area_generic(
 
     # Verifica condições para desenho condicional
     if desenhar_poligono_condicional:
-      if meio_de_lancamento is None or estabilidade_do_ar is None:
-        raise ValueError("meio_de_lancamento e estabilidade_do_ar são obrigatórios")
+        if meio_de_lancamento is None or estabilidade_do_ar is None:
+            raise ValueError("meio_de_lancamento e estabilidade_do_ar são obrigatórios")
 
-
-
-    angle_rad = radians(wind_direction)
+    angle_rad = math.radians(wind_direction)
 
     # Ponto downwind a distância na direção do vento
-    delta_lat, delta_lon = meters_to_latlon_distances(downwind_distance, lat)
-    downwind_point = (
-        lat + delta_lat * sin(angle_rad),
-        lon + delta_lon * cos(angle_rad)
-    )
+    delta_lat, delta_lon = meters_to_latlon_distances(downwind_distance, lat, wind_direction)
+    downwind_point = (lat + delta_lat, lon + delta_lon)
 
     # Linha fonte → ponto downwind
     folium.PolyLine(
@@ -73,17 +82,18 @@ def draw_hazard_area_generic(
         dash_array='5,5',
     ).add_to(map_object)
 
-    side_length = (2 / sqrt(3)) * (downwind_distance + 2 * radius_release_area)
-    perp_angle = angle_rad + radians(90)
-    delta_perp_lat, delta_perp_lon = meters_to_latlon_distances(side_length / 2, lat)
+    side_length = (2 / math.sqrt(3)) * (downwind_distance + 2 * radius_release_area)
+    perp_angle = wind_direction + 90  # graus
+
+    delta_perp_lat, delta_perp_lon = meters_to_latlon_distances(side_length / 2, lat, perp_angle)
 
     upper_perpendicular = (
-        downwind_point[0] + delta_perp_lat * sin(perp_angle),
-        downwind_point[1] + delta_perp_lon * cos(perp_angle)
+        downwind_point[0] + delta_perp_lat,
+        downwind_point[1] + delta_perp_lon
     )
     lower_perpendicular = (
-        downwind_point[0] - delta_perp_lat * sin(perp_angle),
-        downwind_point[1] - delta_perp_lon * cos(perp_angle)
+        downwind_point[0] - delta_perp_lat,
+        downwind_point[1] - delta_perp_lon
     )
 
     folium.PolyLine(
@@ -93,12 +103,13 @@ def draw_hazard_area_generic(
         dash_array='5,5',
     ).add_to(map_object)
 
-    def draw_line(start_point, base_angle, angle_offset_deg, color, length):
-        angle = base_angle - radians(angle_offset_deg)
-        delta_lat, delta_lon = meters_to_latlon_distances(length, lat)
+    # Função para desenhar linhas azuis e verdes
+    def draw_line(start_point, base_angle_deg, angle_offset_deg, color, length):
+        angle_deg = base_angle_deg - angle_offset_deg
+        delta_lat, delta_lon = meters_to_latlon_distances(length, start_point[0], angle_deg)
         end_point = (
-            start_point[0] - delta_lat * sin(angle),
-            start_point[1] - delta_lon * cos(angle)
+            start_point[0] - delta_lat,
+            start_point[1] - delta_lon
         )
         folium.PolyLine(
             locations=[start_point, end_point],
@@ -112,14 +123,15 @@ def draw_hazard_area_generic(
         draw_line(start_pt, perp_angle, angle_offset, color, common_length)
 
     # Pontos finais polígono amarelo
-    delta_blue_lat, delta_blue_lon = meters_to_latlon_distances(common_length, lat)
+    delta_blue_lat, delta_blue_lon = meters_to_latlon_distances(common_length, lat, perp_angle - 60)
     blue_end_point = (
-        upper_perpendicular[0] - delta_blue_lat * sin(perp_angle - radians(60)),
-        upper_perpendicular[1] - delta_blue_lon * cos(perp_angle - radians(60))
+        upper_perpendicular[0] - delta_blue_lat,
+        upper_perpendicular[1] - delta_blue_lon
     )
+    delta_green_lat, delta_green_lon = meters_to_latlon_distances(common_length, lat, perp_angle - 120)
     green_end_point = (
-        lower_perpendicular[0] - delta_blue_lat * sin(perp_angle - radians(120)),
-        lower_perpendicular[1] - delta_blue_lon * cos(perp_angle - radians(120))
+        lower_perpendicular[0] - delta_green_lat,
+        lower_perpendicular[1] - delta_green_lon
     )
 
     folium.PolyLine(
