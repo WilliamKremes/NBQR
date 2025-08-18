@@ -1,4 +1,4 @@
-%%writefile predicoes.py
+
 
 import folium
 from hazard_area import draw_hazard_area_generic
