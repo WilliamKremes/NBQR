@@ -1,11 +1,6 @@
-
-
 import folium
-from pyproj import Geod
-from math import sqrt
-
-# Inicializa geodésia WGS84
-geod = Geod(ellps="WGS84")
+from math import radians, sin, cos, sqrt
+from utils import meters_to_latlon_distances
 
 def draw_hazard_area_generic(
     map_object,
@@ -60,7 +55,11 @@ def draw_hazard_area_generic(
     # ----------------------
     # Ponto downwind (na direção do vento)
     # ----------------------
-    lat_dw, lon_dw, _ = geod.fwd(lon, lat, wind_direction, downwind_distance)
+    delta_lat_dw, delta_lon_dw = meters_to_latlon_distances(downwind_distance, lat)
+    # Ajusta direção do vento (0=norte, 90=leste)
+    azimuth_rad = radians(wind_direction)
+    lat_dw = lat + delta_lat_dw * sin(azimuth_rad)
+    lon_dw = lon + delta_lon_dw * cos(azimuth_rad)
     downwind_point = (lat_dw, lon_dw)
 
     folium.PolyLine(
@@ -74,10 +73,16 @@ def draw_hazard_area_generic(
     # Reta perpendicular ao vento (para polígono)
     # ----------------------
     side_length = (2 / sqrt(3)) * (downwind_distance + 2 * radius_release_area)
-    perp_angle = (wind_direction + 90) % 360
+    perp_angle_rad = radians((wind_direction + 90) % 360)
 
-    lat_up, lon_up, _ = geod.fwd(lon_dw, lat_dw, perp_angle, side_length / 2)
-    lat_down, lon_down, _ = geod.fwd(lon_dw, lat_dw, (perp_angle + 180) % 360, side_length / 2)
+    delta_lat_up, delta_lon_up = meters_to_latlon_distances(side_length / 2, lat_dw)
+    delta_lat_down, delta_lon_down = meters_to_latlon_distances(side_length / 2, lat_dw)
+
+    lat_up = lat_dw + delta_lat_up * sin(perp_angle_rad)
+    lon_up = lon_dw + delta_lon_up * cos(perp_angle_rad)
+    lat_down = lat_dw - delta_lat_down * sin(perp_angle_rad)
+    lon_down = lon_dw - delta_lon_down * cos(perp_angle_rad)
+
     upper_perpendicular = (lat_up, lon_up)
     lower_perpendicular = (lat_down, lon_down)
 
@@ -92,7 +97,10 @@ def draw_hazard_area_generic(
     # Função para desenhar linhas coloridas
     # ----------------------
     def draw_line(start_point, azimuth_deg, length, color):
-        lat_end, lon_end, _ = geod.fwd(start_point[1], start_point[0], azimuth_deg, length)
+        azimuth_rad = radians(azimuth_deg)
+        delta_lat, delta_lon = meters_to_latlon_distances(length, start_point[0])
+        lat_end = start_point[0] + delta_lat * sin(azimuth_rad)
+        lon_end = start_point[1] + delta_lon * cos(azimuth_rad)
         folium.PolyLine(
             [start_point, (lat_end, lon_end)],
             color=color,
@@ -102,8 +110,8 @@ def draw_hazard_area_generic(
         return (lat_end, lon_end)
 
     # Linhas azuis e verdes (60° e 120° em relação à perpendicular)
-    blue_end = draw_line(upper_perpendicular, (perp_angle - 60) % 360, common_length, 'blue')
-    green_end = draw_line(lower_perpendicular, (perp_angle - 120) % 360, common_length, 'green')
+    blue_end = draw_line(upper_perpendicular, (wind_direction + 30) % 360, common_length, 'blue')
+    green_end = draw_line(lower_perpendicular, (wind_direction - 30) % 360, common_length, 'green')
 
     # Linha final amarelo (entre os pontos finais)
     folium.PolyLine(
