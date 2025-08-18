@@ -1,4 +1,4 @@
-# nbqr/prediction.py
+
 import folium
 from hazard_area import draw_hazard_area_generic
 from espargimento import desenhar_area_espargimento, desenhar_area_espargimento2
