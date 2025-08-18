@@ -1,21 +1,17 @@
-from pyproj import Geod
+from math import cos, radians
 
-# Inicializa geodésia WGS84
-geod = Geod(ellps="WGS84")
-
-def meters_to_latlon(lon, lat, distance_m, azimuth_deg):
+def meters_to_latlon_distances(meters, lat):
     """
-    Calcula o ponto final a partir de um ponto inicial (lon, lat),
-    distância em metros e azimute em graus.
+    Converte deslocamento em metros para graus de latitude e longitude,
+    aproximando para pequenas distâncias.
     
     Parâmetros:
-        lon (float): longitude inicial em graus
-        lat (float): latitude inicial em graus
-        distance_m (float): deslocamento em metros
-        azimuth_deg (float): direção do deslocamento (0=norte, 90=leste)
+        meters (float): distância em metros
+        lat (float): latitude atual em graus (para correção de longitude)
     
     Retorna:
-        tuple: (latitude, longitude) do ponto final
+        tuple: (delta_lat, delta_lon) em graus
     """
-    lon1, lat1, _ = geod.fwd(lon, lat, azimuth_deg, distance_m)
-    return lat1, lon1
+    delta_lat = meters / 111_320  # aproximadamente metros por grau latitude
+    delta_lon = meters / (111_320 * cos(radians(lat)))  # ajusta longitude pela latitude
+    return delta_lat, delta_lon
