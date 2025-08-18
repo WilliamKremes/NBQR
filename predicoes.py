@@ -1,5 +1,9 @@
+import folium
 from hazard_area import draw_hazard_area_generic
-from espargimento import desenhar_area_espargimento, desenhar_area_espargimento2
+import math
+from espargimento import desenhar_area_espargimento
+from espargimento import desenhar_area_espargimento2
+
 
 def executar_predicao_simplificada(map_obj, source, wind_speed, wind_direction):
     """Executa a predição simplificada com valores fixos."""
@@ -14,10 +18,11 @@ def executar_predicao_simplificada(map_obj, source, wind_speed, wind_direction):
         desenhar_poligono_condicional=False
     )
 
+
 def obter_parametros_por_estabilidade(estabilidade_do_ar, meio_de_lancamento):
     """Retorna a distância downwind e common_length com base na estabilidade do ar e meio de lançamento."""
-    meio = (meio_de_lancamento or "").strip().lower()
-    est = (estabilidade_do_ar or "").strip().lower()
+    meio = meio_de_lancamento.strip().lower()
+    est = estabilidade_do_ar.strip().lower()
 
     if est == 'instável':
         if meio in ['submunição', 'granada', 'mina']:
@@ -33,18 +38,18 @@ def obter_parametros_por_estabilidade(estabilidade_do_ar, meio_de_lancamento):
         downwind_distance = 50000
         common_length = 58250
     else:
+        print("Estabilidade do ar inválida. Usando valores padrão para instável.")
         downwind_distance = 10000
         common_length = 12000
 
     return downwind_distance, common_length
 
-def executar_predicao_nao_persistente_http(
-    map_obj, source, wind_speed, wind_direction,
-    estabilidade_do_ar, meio_de_lancamento
-):
-    downwind_distance, common_length = obter_parametros_por_estabilidade(
-        estabilidade_do_ar, meio_de_lancamento
-    )
+def executar_predicao_nao_persistente(map_obj, source, wind_speed, wind_direction):
+    """Executa a predição detalhada com base em parâmetros fixos e estabilidade do ar."""
+    estabilidade_do_ar = input("Digite como está a estabilidade do ar (instável, neutra ou estável): ").strip().lower()
+    meio_de_lancamento = input("Digite o meio de lançamento: ").strip().lower()
+    downwind_distance, common_length = obter_parametros_por_estabilidade(estabilidade_do_ar, meio_de_lancamento)
+
     draw_hazard_area_generic(
         map_object=map_obj,
         source_location=source,
@@ -58,13 +63,18 @@ def executar_predicao_nao_persistente_http(
         desenhar_poligono_condicional=True
     )
 
-def executar_predicao_persistente_http(
-    map_obj, source, wind_speed, wind_direction, meio_de_lancamento
-):
-    meio = (meio_de_lancamento or "").strip().lower()
 
-    if meio in ['espargimento', 'gerador']:
-        source_final = (-22.841, -43.1798)  # exemplo simples
+
+
+
+
+def executar_predicao_persistente(map_obj, source, wind_speed, wind_direction):
+    """Executa a predição detalhada para agentes persistentes com base na velocidade do vento e tipo de meio."""
+    meio_de_lancamento = input("Digite o meio de lançamento: ").strip().lower()
+
+    # Casos de espargimento
+    if meio_de_lancamento in ['espargimento', 'gerador']:
+        source_final = (-22.841, -43.1798)  # Rio de Janeiro (exemplo)
         downwind_distance = 10000
         common_length = downwind_distance
         radius_release_area = 1000
@@ -79,7 +89,8 @@ def executar_predicao_persistente_http(
                 common_length=common_length,
                 wind_speed=wind_speed,
                 wind_direction=wind_direction,
-                meio_de_lancamento=meio,
+                meio_de_lancamento=meio_de_lancamento,
+                draw_hazard_area_generic=draw_hazard_area_generic
             )
         else:
             desenhar_area_espargimento2(
@@ -91,21 +102,29 @@ def executar_predicao_persistente_http(
                 common_length=common_length,
                 wind_speed=wind_speed,
                 wind_direction=wind_direction,
-                meio_de_lancamento=meio,
+                meio_de_lancamento=meio_de_lancamento,
+                draw_hazard_area_generic=draw_hazard_area_generic
             )
+
+    # Casos de outros meios
     else:
-        if meio in ['bomba', 'granada', 'mina', 'foguete de detonação de superfície', 'míssil']:
+        # Para outros meios
+        if meio_de_lancamento in ['bomba', 'granada', 'mina', 'foguete de detonação de superfície', 'míssil']:
             radius_release_area = 1000
             downwind_distance = 10000
             common_length = 12000
-        elif meio in ['foguete de detonação aérea', 'míssil de detonação aérea']:
+        elif meio_de_lancamento in ['foguete de detonação aérea', 'míssil de detonação aérea']:
             radius_release_area = 2000
             downwind_distance = 10000
             common_length = 12600
         else:
+            print("Meio de lançamento não reconhecido. Usando valores padrão.")
             radius_release_area = 1000
             downwind_distance = 10000
             common_length = 12000
+
+        # A lógica para vento > 10 km/h é idêntica para esses meios, portanto mantemos os mesmos valores
+        # Se quiser modificar para vento > 10 km/h, ajuste aqui.
 
         draw_hazard_area_generic(
             map_object=map_obj,
@@ -115,7 +134,7 @@ def executar_predicao_persistente_http(
             radius_release_area=radius_release_area,
             downwind_distance=downwind_distance,
             common_length=common_length,
-            meio_de_lancamento=meio,
-            estabilidade_do_ar='neutra',
+            meio_de_lancamento=meio_de_lancamento,
+            estabilidade_do_ar='',
             desenhar_poligono_condicional=True
         )
