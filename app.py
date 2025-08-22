@@ -43,7 +43,6 @@ def index():
             source=source,
             wind_speed=wind_speed,
             wind_direction=wind_direction,
-            meio_de_lancamento=meio or "granada",
         )
     elif agente in agentes_persistentes:
         executar_predicao_persistente(   # Corrigido
