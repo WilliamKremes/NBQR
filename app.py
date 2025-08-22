@@ -4,8 +4,8 @@ import folium
 from agentes_quimicos import agentes_nao_persistentes, agentes_persistentes
 from predicoes import (
     executar_predicao_simplificada,
-    executar_predicao_nao_persistente,  # Corrigido aqui
-    executar_predicao_persistente_http,
+    executar_predicao_nao_persistente,  # Corrigido
+    executar_predicao_persistente,      # Corrigido
 )
 
 app = Flask(__name__)
@@ -38,7 +38,7 @@ def index():
 
     # Decide a predição
     if agente in agentes_nao_persistentes:
-        executar_predicao_nao_persistente(  # Corrigido aqui
+        executar_predicao_nao_persistente(   # Corrigido
             map_obj=map_obj,
             source=source,
             wind_speed=wind_speed,
@@ -47,7 +47,7 @@ def index():
             meio_de_lancamento=meio or "granada",
         )
     elif agente in agentes_persistentes:
-        executar_predicao_persistente_http(
+        executar_predicao_persistente(   # Corrigido
             map_obj=map_obj,
             source=source,
             wind_speed=wind_speed,
