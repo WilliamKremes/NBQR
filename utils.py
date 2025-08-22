@@ -12,6 +12,8 @@ def meters_to_latlon_distances(meters, lat):
     Retorna:
         tuple: (delta_lat, delta_lon) em graus
     """
-    delta_lat = meters / 111_320  # aproximadamente metros por grau latitude
-    delta_lon = meters / (111_320 * cos(radians(lat)))  # ajusta longitude pela latitude
+    delta_lat = meters / 111320  # aproximadamente metros por grau latitude
+    delta_lon = meters / (40075000 * cos(radians(lat))/360)  # ajusta longitude pela latitude
     return delta_lat, delta_lon
+
+
