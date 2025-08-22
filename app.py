@@ -4,7 +4,7 @@ import folium
 from agentes_quimicos import agentes_nao_persistentes, agentes_persistentes
 from predicoes import (
     executar_predicao_simplificada,
-    executar_predicao_nao_persistente_http,
+    executar_predicao_nao_persistente,  # Corrigido aqui
     executar_predicao_persistente_http,
 )
 
@@ -38,7 +38,7 @@ def index():
 
     # Decide a predição
     if agente in agentes_nao_persistentes:
-        executar_predicao_nao_persistente_http(
+        executar_predicao_nao_persistente(  # Corrigido aqui
             map_obj=map_obj,
             source=source,
             wind_speed=wind_speed,
