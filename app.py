@@ -51,7 +51,7 @@ def index():
             source=source,
             wind_speed=wind_speed,
             wind_direction=wind_direction,
-            meio_de_lancamento=meio or "bomba",
+            #meio_de_lancamento=meio or "bomba",
         )
     else:
         executar_predicao_simplificada(
