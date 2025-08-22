@@ -14,9 +14,11 @@ def index():
     # Valores padrão
     source_lat = -22.941
     source_lon = -43.1798
-    wind_speed = 12.0   # km/h
+    wind_speed = 12.0
     wind_direction = 90.0
     agente = ""
+    meio = "granada"
+    estabilidade = "instável"
 
     if request.method == "POST":
         try:
@@ -25,6 +27,8 @@ def index():
             wind_speed = float(request.form.get("wind_speed", wind_speed))
             wind_direction = float(request.form.get("wind_direction", wind_direction))
             agente = (request.form.get("agente") or "").strip().lower()
+            meio = (request.form.get("meio") or "granada").strip().lower()
+            estabilidade = (request.form.get("estabilidade") or "instável").strip().lower()
         except Exception:
             pass
 
@@ -33,9 +37,16 @@ def index():
 
     # Decisão conforme tipo de agente químico
     if agente in agentes_nao_persistentes:
-        executar_predicao_nao_persistente(map_obj, source, wind_speed, wind_direction)
+        executar_predicao_nao_persistente(
+            map_obj, source, wind_speed, wind_direction,
+            estabilidade_do_ar=estabilidade,
+            meio_de_lancamento=meio
+        )
     elif agente in agentes_persistentes:
-        executar_predicao_persistente(map_obj, source, wind_speed, wind_direction)
+        executar_predicao_persistente(
+            map_obj, source, wind_speed, wind_direction,
+            meio_de_lancamento=meio
+        )
     else:
         executar_predicao_simplificada(map_obj, source, wind_speed, wind_direction)
 
@@ -49,6 +60,8 @@ def index():
         wind_speed=wind_speed,
         wind_direction=wind_direction,
         agente=agente,
+        meio=meio,
+        estabilidade=estabilidade
     )
 
 if __name__ == "__main__":
