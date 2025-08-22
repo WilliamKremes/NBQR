@@ -43,7 +43,6 @@ def index():
             source=source,
             wind_speed=wind_speed,
             wind_direction=wind_direction,
-            estabilidade_do_ar=estabilidade or "instável",
             meio_de_lancamento=meio or "granada",
         )
     elif agente in agentes_persistentes:
