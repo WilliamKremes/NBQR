@@ -17,8 +17,8 @@ def index():
     wind_speed = 12.0
     wind_direction = 90.0
     agente = ""
-    meio = "granada"
-    estabilidade = "instável"
+    meio = ""
+    estabilidade = ""
 
     if request.method == "POST":
         try:
