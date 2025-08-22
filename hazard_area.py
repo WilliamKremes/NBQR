@@ -56,7 +56,7 @@ def draw_hazard_area_generic(
       if meio_de_lancamento is None or estabilidade_do_ar is None:
         raise ValueError("meio_de_lancamento e estabilidade_do_ar são obrigatórios")
     
-   angle_rad = radians(wind_direction)
+    angle_rad = radians(wind_direction)
 
     # Ponto downwind a distância na direção do vento
     delta_lat, delta_lon = meters_to_latlon_distances(downwind_distance, lat)
