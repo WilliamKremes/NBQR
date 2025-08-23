@@ -1,5 +1,3 @@
-%%writefile espargimento.py
-
 import math
 from math import radians, cos, sin, sqrt
 import folium
