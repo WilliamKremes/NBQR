@@ -41,6 +41,15 @@
         <label>Meio de lançamento</label>
         <input type="text" name="meio" placeholder="ex.: granada, bomba, espargimento..." value="{{ meio }}">
       </div>
+      <!-- NOVOS CAMPOS PARA SOURCE_FINAL -->
+      <div>
+        <label>Latitude Final (source_final)</label>
+        <input type="number" step="any" name="lat_final" value="{{ lat_final }}">
+      </div>
+      <div>
+        <label>Longitude Final (source_final)</label>
+        <input type="number" step="any" name="lon_final" value="{{ lon_final }}">
+      </div>
       <div>
         <label>Estabilidade do ar</label>
         <select name="estabilidade">
@@ -54,7 +63,7 @@
     </form>
 
     <div class="hint">
-      Dica: se não informar “agente químico”, roda a predição simplificada. Para agentes <b>não persistentes</b> considera a estabilidade do ar; para <b>persistentes</b>, considera o meio de lançamento.
+      Dica: se não informar “agente químico”, roda a predição simplificada. Para agentes <b>não persistentes</b> considera a estabilidade do ar; para <b>persistentes</b>, considera o meio de lançamento. Para espargimento/gerador, informe as coordenadas finais.
     </div>
 
     <div class="map">{{ map_html|safe }}</div>
