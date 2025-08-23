@@ -1,3 +1,5 @@
+%%writefile espargimento.py
+
 import math
 from math import radians, cos, sin, sqrt
 import folium
@@ -112,7 +114,6 @@ def desenhar_area_espargimento(
         fill_opacity=0.7,
         tooltip='Polígono entre linhas paralelas'
     ).add_to(map_obj)
-
 
     # Distância perpendicular em metros
     offset_metros = 10000
@@ -233,6 +234,7 @@ def desenhar_area_espargimento2(
 
     # 4. Para cada ponto (source e source_final) desenhar downwind e triângulos
     angle_rad = radians(wind_direction)
+    bases = []  # armazenar as bases inferiores dos dois triângulos
 
     for lat, lon in [source, source_final]:
         # Calcular ponto downwind na direção do vento
@@ -286,21 +288,12 @@ def desenhar_area_espargimento2(
                 weight=1,
                 dash_array='5,5'
             ).add_to(map_obj)
+            return end_point
 
         # Desenha linhas azul e verde formando os triângulos
-        for angle_offset, color, start_pt in zip([60, 120], ['blue', 'green'], [upper_perpendicular, lower_perpendicular]):
-            common_length = 12000
-            draw_line(start_pt, perp_angle, angle_offset, color, common_length)
-
-        delta_blue_lat, delta_blue_lon = meters_to_latlon_distances(common_length, lat)
-        blue_end_point = (
-            upper_perpendicular[0] - delta_blue_lat * sin(perp_angle - radians(60)),
-            upper_perpendicular[1] - delta_blue_lon * cos(perp_angle - radians(60))
-        )
-        green_end_point = (
-            lower_perpendicular[0] - delta_blue_lat * sin(perp_angle - radians(120)),
-            lower_perpendicular[1] - delta_blue_lon * cos(perp_angle - radians(120))
-        )
+        common_length = 12000
+        blue_end_point = draw_line(upper_perpendicular, perp_angle, 60, 'blue', common_length)
+        green_end_point = draw_line(lower_perpendicular, perp_angle, 120, 'green', common_length)
 
         folium.PolyLine(
             locations=[blue_end_point, green_end_point],
@@ -324,7 +317,8 @@ def desenhar_area_espargimento2(
             popup='Polígono Fechado'
         ).add_to(map_obj)
 
-
+        # Guardar a base inferior (linha verde → lower_perpendicular)
+        bases.append((lower_perpendicular, green_end_point))
 
         # Círculo reforçado da área de liberação (opcional)
         folium.Circle(
@@ -334,4 +328,29 @@ def desenhar_area_espargimento2(
             fill=True,
             fill_opacity=0.7,
             popup='Área de Liberação'
+        ).add_to(map_obj)
+
+    # 5. Unir as bases inferiores dos dois triângulos
+    if len(bases) == 2:
+        folium.PolyLine(
+            locations=[bases[0][0], bases[1][0]],
+            color='red',
+            weight=2,
+            tooltip='Linha entre lower_perpendicular'
+        ).add_to(map_obj)
+
+        folium.PolyLine(
+            locations=[bases[0][1], bases[1][1]],
+            color='red',
+            weight=2,
+            tooltip='Linha entre green_end_point'
+        ).add_to(map_obj)
+
+        folium.Polygon(
+            locations=[bases[0][0], bases[0][1], bases[1][1], bases[1][0]],
+            color='red',
+            weight=1,
+            fill=True,
+            fill_opacity=0.2,
+            tooltip='Área unindo bases inferiores'
         ).add_to(map_obj)
