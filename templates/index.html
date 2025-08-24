@@ -42,7 +42,9 @@
         <select name="meio">
           <option value="" selected>—</option>
           <option value="bomba" {{ 'selected' if meio=='bomba' else '' }}>Bomba</option>
+          <option value="espargimento" {{ 'selected' if meio=='espargimento' else '' }}>Espargimento</option>
           <option value="granada" {{ 'selected' if meio=='granada' else '' }}>Granada</option>
+          <option value="gerador" {{ 'selected' if meio=='gerador' else '' }}>Gerador</option>
           <option value="minas" {{ 'selected' if meio=='minas' else '' }}>Minas</option>
           <option value="míssil_superficie" {{ 'selected' if meio=='míssil_superficie' else '' }}>Míssil ou Foguete de detonação de superfície</option>
           <option value="míssil_aereo" {{ 'selected' if meio=='míssil_aereo' else '' }}>Míssil ou Foguete de detonação aérea</option>
