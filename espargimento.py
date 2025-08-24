@@ -231,7 +231,7 @@ def desenhar_area_espargimento2(
     ).add_to(map_obj)
 
     # 4. Para cada ponto (source e source_final) desenhar downwind e triângulos
-    angle_rad = radians(wind_direction)
+    angle_rad = radians((wind_direction - 90) % 360)
     bases = []  # armazenar as bases inferiores dos dois triângulos
 
     for lat, lon in [source, source_final]:
