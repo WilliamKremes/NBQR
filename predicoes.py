@@ -23,7 +23,7 @@ def obter_parametros_por_estabilidade(estabilidade_do_ar, meio_de_lancamento):
     est = estabilidade_do_ar.strip().lower()
 
     if est == 'instável':
-        if meio in ['submunição', 'granada', 'mina']:
+        if meio in ['submunição', 'granada', 'minas']:
             downwind_distance = 10000
             common_length = 12000
         else:
@@ -101,11 +101,11 @@ def executar_predicao_persistente(map_obj, source, wind_speed, wind_direction,
 
     # Casos de outros meios
     else:
-        if meio_de_lancamento in ['bomba', 'granada', 'mina', 'foguete de detonação de superfície', 'míssil']:
+        if meio_de_lancamento in ['bomba', 'granada', 'minas', 'míssil ou foguete de detonação de superfície']:
             radius_release_area = 1000
             downwind_distance = 10000
             common_length = 12000
-        elif meio_de_lancamento in ['foguete de detonação aérea', 'míssil de detonação aérea']:
+        elif meio_de_lancamento in ['míssil ou foguete de detonação aérea']:
             radius_release_area = 2000
             downwind_distance = 10000
             common_length = 12600
