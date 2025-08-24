@@ -101,11 +101,11 @@ def executar_predicao_persistente(map_obj, source, wind_speed, wind_direction,
 
     # Casos de outros meios
     else:
-        if meio_de_lancamento in ['bomba', 'granada', 'minas', 'míssil_superfície']:
+        if meio_de_lancamento in ['bomba', 'granada', 'minas', 'míssil_superficie']:
             radius_release_area = 1000
             downwind_distance = 10000
             common_length = 12000
-        elif meio_de_lancamento in ['míssil_aéreo']:
+        elif meio_de_lancamento in ['míssil_aereo']:
             radius_release_area = 2000
             downwind_distance = 10000
             common_length = 12600
