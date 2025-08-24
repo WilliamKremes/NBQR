@@ -39,7 +39,16 @@
       </div>
       <div>
         <label>Meio de lançamento</label>
-        <input type="text" name="meio" placeholder="ex.: granada, bomba, espargimento..." value="{{ meio }}">
+        <select name="meio">
+          <option value="" selected>—</option>
+          <option value="bomba" {{ 'selected' if meio=='bomba' else '' }}>Bomba</option>
+          <option value="granada" {{ 'selected' if meio=='granada' else '' }}>Granada</option>
+          <option value="minas" {{ 'selected' if meio=='minas' else '' }}>Minas</option>
+          <option value="míssil_superficie" {{ 'selected' if meio=='míssil_superficie' else '' }}>Míssil ou Foguete de detonação de superfície</option>
+          <option value="míssil_aereo" {{ 'selected' if meio=='míssil_aereo' else '' }}>Míssil ou Foguete de detonação aérea</option>
+          <option value="submunições" {{ 'selected' if meio=='submunições' else '' }}>Submunições</option>
+          <option value="desconhecido" {{ 'selected' if meio=='desconhecido' else '' }}>Desconhecido</option>
+        </select>
       </div>
       <!-- NOVOS CAMPOS PARA SOURCE_FINAL -->
       <div>
