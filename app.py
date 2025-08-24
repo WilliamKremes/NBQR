@@ -14,8 +14,8 @@ def index():
     # Valores padrão
     source_lat = -22.941
     source_lon = -43.1798
-    wind_speed = 12.0
-    wind_direction = 90.0
+    wind_speed = ""
+    wind_direction = ""
     agente = ""
     meio = ""
     estabilidade = ""
