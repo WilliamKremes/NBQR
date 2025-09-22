@@ -29,7 +29,7 @@ def index():
             wind_direction = float(request.form.get("wind_direction", wind_direction))
             agente = (request.form.get("agente") or "").strip().lower()
             meio = (request.form.get("meio") or "").strip().lower()
-            estabilidade = (request.form.get("estabilidade") or "instável").strip().lower()
+            estabilidade = (request.form.get("estabilidade") or "").strip().lower()
 
             lat_final = request.form.get("lat_final")
             lon_final = request.form.get("lon_final")
